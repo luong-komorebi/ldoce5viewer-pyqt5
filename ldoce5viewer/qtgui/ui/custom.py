@@ -224,7 +224,7 @@ class WebView(QWebView):
         page = self.page()
         menu = page.createStandardContextMenu()
         actions = menu.actions()
-        
+
         # inserts the "Download audio" action
         frame = page.frameAt(event.pos())
         hit_test_result = frame.hitTestContent(event.pos())
@@ -233,9 +233,7 @@ class WebView(QWebView):
             menu.insertAction(actions[0] if actions else None,
                     self.actionDownloadAudio)
 
-        # inserts the "Search for ..." action
-        text = page.selectedText().strip().lower()
-        if text:
+        if text := page.selectedText().strip().lower():
             text = ellipsis(text, 18)
             self._actionSearchText.setText(u'Lookup "{0}"'.format(text))
             menu.insertAction(actions[0] if actions else None,
@@ -264,9 +262,7 @@ class WebView(QWebView):
         menu.exec_(event.globalPos())
 
     def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
-            pass
-        else:
+        if not event.matches(QKeySequence.Copy):
             super(WebView, self).keyPressEvent(event)
 
     #--------------

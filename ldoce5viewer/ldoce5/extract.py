@@ -80,17 +80,13 @@ def _make_variations(base, inflections):
     if len(base.split()) > 1:
         return {}
 
-    v = set()
-    v.add(base.lower())
+    v = {base.lower()}
     v.update(inflx.lower() for inflx in inflections)
     if len(v) <= 1:
         return {base: []}
 
     v = tuple(v)
-    ret = {}
-    for i in range(len(v)):
-        ret[v[i]] = v[:i] + v[i+1:]
-    return ret
+    return {v[i]: v[:i] + v[i+1:] for i in range(len(v))}
 
 
 def _get_incorrect_inflections(
@@ -108,25 +104,25 @@ def _get_incorrect_inflections(
 
         endswith = base.endswith
         if endswith('y'):
-            return (base + 's', base[:-1] + 'ies', )
+            return f'{base}s', f'{base[:-1]}ies'
         elif endswith('f'):
-            return (base[:-1] + 'ves', )
+            return (f'{base[:-1]}ves', )
         elif endswith('fe'):
-            return (base[:-2] + 'ves', )
+            return (f'{base[:-2]}ves', )
         else:
-            return (base + 's', base + 'es')
+            return f'{base}s', f'{base}es'
 
     def handle_adjective():
         endswith = base.endswith
 
         def make_comparative():
             if base.endswith('e'):
-                return (base + 'r', base + 'st')
+                return f'{base}r', f'{base}st'
             elif base.endswith('y'):
                 s = base[:-1]
-                return (s + 'ier', s + 'iest')
+                return f'{s}ier', f'{s}iest'
             else:
-                return (base + 'er', base + 'est')
+                return f'{base}er', f'{base}est'
             return ()
 
         for s in gramlist:
@@ -236,7 +232,7 @@ def get_entry_items(entry_data):
     hwdlabel = make_hwd_label()
 
     def get_hwd():
-        path = '/fs/' + root_id
+        path = f'/fs/{root_id}'
         hwd = head.find('HWD')
         hwdplain = _get_text(hwd.find('BASE'))
         asfilter = _get_filter(hwd)
@@ -255,7 +251,7 @@ def get_entry_items(entry_data):
         return ('hm', label, path, hwdplain, hwdplain, asfilter, 1)
 
     def get_hwd_variants():
-        path = '/fs/' + root_id
+        path = f'/fs/{root_id}'
         hwd = head.find('HWD')
         hwdplain = _get_text(hwd.find('BASE'))
         asfilter = _get_filter(hwd)
@@ -280,9 +276,8 @@ def get_entry_items(entry_data):
             if lexvar.get('id', None) is None:
                 continue
             v_id = lexvar.get('id')
-            v_path = path + '#' + shorten_id(v_id)
-            v_plains = tuple(set(
-                _get_text(e) for e in lexvar.iterfind('INFLX')))
+            v_path = f'{path}#{shorten_id(v_id)}'
+            v_plains = tuple({_get_text(e) for e in lexvar.iterfind('INFLX')})
             for v_plain in v_plains:
                 if v_plain in incorrect:
                     continue
@@ -321,7 +316,7 @@ def get_entry_items(entry_data):
                     escape(plain), escape(', '.join(poslist)))
         else:
             label = '<n>{0}</n>'.format(escape(plain))
-        yield ('hm', '<h>' + label + '</h>', path, plain, plain, asfilter, 1)
+        yield ('hm', f'<h>{label}</h>', path, plain, plain, asfilter, 1)
 
         incorrect = frozenset(_get_incorrect_inflections(
             plain,
@@ -452,8 +447,7 @@ def get_entry_items(entry_data):
 
     def gen(f, elems):
         for e in elems:
-            for r in f(e):
-                yield r
+            yield from f(e)
 
     items = []
     headword = get_hwd()

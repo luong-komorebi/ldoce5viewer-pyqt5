@@ -35,10 +35,7 @@ def _get_text_nr(e):
     if e.text is not None:
         r.append(e.text)
 
-    for c in e:
-        if c.tail is not None:
-            r.append(c.tail)
-
+    r.extend(c.tail for c in e if c.tail is not None)
     return ''.join(r).strip()
 
 
@@ -51,20 +48,27 @@ def _build_header(resnames, title=None, meta={}):
         r.append('<meta name="{0}" content="{1}" />'.format(
             escape(k), escape(v)))
 
-    r.append('<script type="application/javascript" '
-            'src="static:///scripts/jquery.js"></script>\n')
-    r.append('<script type="application/javascript" '
-            'src="static:///scripts/colorbox/jquery.colorbox.js"></script>\n')
-    r.append('<link href="static:///scripts/colorbox/colorbox.css" '
-         'rel="stylesheet" type="text/css">\n')
+    r.extend(
+        (
+            '<script type="application/javascript" '
+            'src="static:///scripts/jquery.js"></script>\n',
+            '<script type="application/javascript" '
+            'src="static:///scripts/colorbox/jquery.colorbox.js"></script>\n',
+            '<link href="static:///scripts/colorbox/colorbox.css" '
+            'rel="stylesheet" type="text/css">\n',
+        )
+    )
     for name in resnames:
-        r.append('<link href="static:///styles/{0}.css" '
-             'rel="stylesheet" type="text/css">\n'.format(name))
-        r.append('<link href="static:///styles/{0}.css" '
-             'rel="stylesheet" type="text/css">\n'.format(name))
-        r.append('<script type="application/javascript" '
-                'src="static:///scripts/{0}.js" ></script>\n'.format(name))
-
+        r.extend(
+            (
+                '<link href="static:///styles/{0}.css" '
+                'rel="stylesheet" type="text/css">\n'.format(name),
+                '<link href="static:///styles/{0}.css" '
+                'rel="stylesheet" type="text/css">\n'.format(name),
+                '<script type="application/javascript" '
+                'src="static:///scripts/{0}.js" ></script>\n'.format(name),
+            )
+        )
     if title:
         r.append('<title>{0}</title>\n'.format(title))
 
@@ -73,15 +77,13 @@ def _build_header(resnames, title=None, meta={}):
 
 
 def trans_entry(data):
-    r = []
     meta = {}
 
     try:
         root = et.fromstring(data)
         head = root.find('Head')
         title = _get_text_nr(head.find('HWD/BASE'))
-        poslist = head.findall('POS')
-        if poslist:
+        if poslist := head.findall('POS'):
             title += ' ({0})'.format(
                     ', '.join(_get_text_nr(pos) for pos in poslist))
     except:
@@ -97,19 +99,17 @@ def trans_entry(data):
     except:
         pass
 
-    r.append(_build_header(['entry'], title=title, meta=meta))
-
-    r.append(et.tounicode(_trans_assets(root),
-        pretty_print=True, method='html'))
-
-    r.append(body2html(root))
-    r.append('</body></html>')
+    r = [
+        _build_header(['entry'], title=title, meta=meta),
+        et.tounicode(_trans_assets(root), pretty_print=True, method='html'),
+        body2html(root),
+        '</body></html>',
+    ]
     return enc_utf8(''.join(r))
 
 
 def trans_thesaurus(data_set):
-    r = []
-    r.append(_build_header(['thesaurus']))
+    r = [_build_header(['thesaurus'])]
     for data in data_set:
         root = et.fromstring(data)
         head = root.find('SECHEADING')
@@ -120,17 +120,20 @@ def trans_thesaurus(data_set):
             r.append('<div class="exponent">')
             head = exp.find('exp-head/EXP').text
             body = body2html(exp.find('exp-body'))
-            r.append('<span class="colloc">{0}</span> {1}'.format(
-                escape(head), body))
-            r.append('</div>\n')
-
+            r.extend(
+                (
+                    '<span class="colloc">{0}</span> {1}'.format(
+                        escape(head), body
+                    ),
+                    '</div>\n',
+                )
+            )
     r.append('</body>\n</html>')
     return enc_utf8(''.join(r))
 
 
 def trans_collocations(data):
-    r = []
-    r.append(_build_header(['collocations']))
+    r = [_build_header(['collocations'])]
     root = et.fromstring(data)
     for cb in root.iterfind('ColloBox'):
         head = cb.find('HEADING')
@@ -145,28 +148,24 @@ def trans_collocations(data):
             for co in sec.iterfind('Collocate'):
                 r.append('<div class=collocate>')
                 head = co.find('coll-head/COLLOC').text
-                r.append('<span class=colloc>' + escape(head) + '</span> ')
-                r.append(body2html(co.find('coll-body')))
-                r.append('</div>')
-
+                r.append(f'<span class=colloc>{escape(head)}</span> ')
+                r.extend((body2html(co.find('coll-body')), '</div>'))
     r.append('</body></html>')
     return enc_utf8(''.join(r))
 
 
 def trans_word_sets(data_set):
-    r = []
-    r.append(_build_header(['word_sets']))
+    r = [_build_header(['word_sets'])]
     for data in data_set:
         root = et.fromstring(data)
         name = root.find('ws-head/name').text
         number = root.find('ws-head/number').text
-        r.append('<h2>{0} ({1})</h2>\n'.format(name, number))
-        r.append('<ul>\n')
+        r.extend(('<h2>{0} ({1})</h2>\n'.format(name, number), '<ul>\n'))
         for ref in root.iterfind('ws-body/Ref'):
             hwd = ref.find('hwd').text or ''
             pos = ref.find('pos').text or ''
             topic = ref.get('topic')
-            link = '/fs/' + shorten_id(topic)
+            link = f'/fs/{shorten_id(topic)}'
             r.append('''<li><a href="{0}" class=hwd>{1}</a> '''
                     '''<span class=pos>{2}</span>'''
                     '''</li>\n'''.format(link, escape(hwd), escape(pos)))
@@ -178,8 +177,7 @@ def trans_word_sets(data_set):
 
 
 def trans_phrases(data):
-    r = []
-    r.append(_build_header(['phrases']))
+    r = [_build_header(['phrases'])]
     root = et.fromstring(data)
     for ph in root.iterfind('phrase'):
         ref = ph.find('phrase-head/Ref')
@@ -187,12 +185,16 @@ def trans_phrases(data):
         bookmark = ref.get('bookmark')
         phrase = ref.text
         link = '/fs/{0}#{1}'.format(shorten_id(topic), shorten_id(bookmark))
-        r.append('<h2><a href="{1}">{0}</a></h2>'.format(
-            escape(phrase), link))
-        r.append('<ul>')
-        for e in (_get_text_r(e) for e in ph.iterfind('phrase-body/exa')):
-            r.append('<li class=example>{0}</li>'.format(e))
-
+        r.extend(
+            (
+                '<h2><a href="{1}">{0}</a></h2>'.format(escape(phrase), link),
+                '<ul>',
+            )
+        )
+        r.extend(
+            '<li class=example>{0}</li>'.format(e)
+            for e in (_get_text_r(e) for e in ph.iterfind('phrase-body/exa'))
+        )
         r.append('</ul>')
 
     r.append('</body></html>')
@@ -205,26 +207,21 @@ def trans_examples(data):
             root.find('exa-head/hwd').text,
             root.find('exa-head/pos').text)
     exas = tuple
-    r = []
-    r.append(_build_header(['examples']))
-    r.append('<h1>{0}</h1>\n'.format(title))
-    r.append('<ul>\n')
-    for e in (_get_text_r(e) for e in root.iterfind('exa-body/exa')):
-        r.append('<li class="example">{0}</li>\n'.format(e))
-
-    r.append('</ul>\n')
-    r.append('</body>\n</html>')
+    r = [_build_header(['examples']), '<h1>{0}</h1>\n'.format(title), '<ul>\n']
+    r.extend(
+        '<li class="example">{0}</li>\n'.format(e)
+        for e in (_get_text_r(e) for e in root.iterfind('exa-body/exa'))
+    )
+    r.extend(('</ul>\n', '</body>\n</html>'))
     return enc_utf8(''.join(r))
 
 
 def trans_word_families(data):
-    r = []
-    r.append(_build_header(['word_families']))
+    r = [_build_header(['word_families'])]
     root = et.fromstring(data)
     for g in root.iterfind('group'):
         pos = g.find('pos').text
-        r.append('<h2>{0}</h2>'.format(pos))
-        r.append('<ul>')
+        r.extend(('<h2>{0}</h2>'.format(pos), '<ul>'))
         for w in g.iterfind('w'):
             r.append('<li>')
             ref = w.find('Ref')
@@ -250,11 +247,9 @@ def trans_word_families(data):
 
 
 def trans_etymologies(data):
-    r = []
-    r.append(_build_header(['etymologies']))
+    r = [_build_header(['etymologies'])]
     root = et.fromstring(data)
-    r.append(body2html(root))
-    r.append('</body>\n</html>')
+    r.extend((body2html(root), '</body>\n</html>'))
     return enc_utf8(''.join(r))
 
 
@@ -335,22 +330,20 @@ def _trans_activator_section(data):
 
 
 def trans_activator(data_c, data_s, sid):
-    r = []
     (concept_body, concept_title) = _trans_activator_concept(data_c, sid)
     (section_body, section_title) = _trans_activator_section(data_s)
     title = concept_title + section_title
-    r.append(_build_header(['activator'], title=title))
-    # section
-    r.append('<div id="section_w">\n')
-    r.append('<div id="section">\n')
-    r.append(section_body)
-    r.append('</div>\n')
-    r.append('</div>\n')
-    # concept
-    r.append('<div id="concept">\n')
-    r.append(concept_body)
-    r.append('</div>\n')
-    # end
-    r.append('</body></html>')
+    r = [
+        _build_header(['activator'], title=title),
+        '<div id="section_w">\n',
+        '<div id="section">\n',
+        section_body,
+        '</div>\n',
+        '</div>\n',
+        '<div id="concept">\n',
+        concept_body,
+        '</div>\n',
+        '</body></html>',
+    ]
     return enc_utf8(''.join(r))
 

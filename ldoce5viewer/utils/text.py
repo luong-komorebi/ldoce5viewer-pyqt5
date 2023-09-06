@@ -36,13 +36,11 @@ def normalize_index_key(key):
 
     def is_wd(c):
         cat = _unicode_category(c)
-        return (cat == 'Ll' or cat == 'Nd')
+        return cat in ['Ll', 'Nd']
 
     return u''.join(c for c in _unicode_normalize(u'NFKD', key)
                     if is_wd(c))
 
 
 def ellipsis(s, length):
-    if len(s) >= length:
-        return s[:length-1] + u'\u2026'
-    return s
+    return s[:length-1] + u'\u2026' if len(s) >= length else s

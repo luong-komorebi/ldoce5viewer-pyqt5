@@ -200,31 +200,29 @@ class Maker(object):
         if len(mm) != first + num * 4:
             raise IndexError('index is broken')
 
-        dstf = open(self._path, "wb")
+        with open(self._path, "wb") as dstf:
+            write = dstf.write
+            write(_pack_I(_MAGIC))
+            write(_pack_I(_DB_VERSION))
+            write(_pack_I(num))
+            write(_pack_I(first + 4 * 4))
 
-        write = dstf.write
-        write(_pack_I(_MAGIC))
-        write(_pack_I(_DB_VERSION))
-        write(_pack_I(num))
-        write(_pack_I(first + 4 * 4))
+            new_xlist = []
+            p = first
+            newx = 4 * 4
+            for _ in range(num):
+                new_xlist.append(newx)
+                x = _unpack_I(mm[p:p+4])[0]
+                sizes = mm[x:(x + 8)]
+                (lenplain, lentypecode, lenlabel, lenpath, prio) = \
+                        _unpack_HBHHB(sizes)
+                datasize = lenplain + lentypecode + lenlabel + lenpath
+                data = mm[x:(x + 8 + datasize)]
+                write(data)
+                p += 4
+                newx += 8 + datasize
 
-        new_xlist = []
-        p = first
-        newx = 4 * 4
-        for i in range(num):
-            new_xlist.append(newx)
-            x = _unpack_I(mm[p:p+4])[0]
-            sizes = mm[x:(x + 8)]
-            (lenplain, lentypecode, lenlabel, lenpath, prio) = \
-                _unpack_HBHHB(sizes)
-            datasize = lenplain + lentypecode + lenlabel + lenpath
-            data = mm[x:(x + 8 + datasize)]
-            write(data)
-            p += 4
-            newx += 8 + datasize
+            for x in new_xlist:
+                write(_pack_I(x))
 
-        for x in new_xlist:
-            write(_pack_I(x))
-
-        dstf.close()
         mm.close()

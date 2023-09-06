@@ -28,7 +28,7 @@ def get_config():
 class __Config(object):
     def __init__(self, debug=False):
         self.debug = debug
-        self._dict = dict()
+        self._dict = {}
         self._prepare_dir()
         self._remove_tmps()
         self._lock = QReadWriteLock()
@@ -147,7 +147,7 @@ class __Config(object):
 
     @property
     def scan_tmp_path(self):
-        return os.path.join(self._data_dir, 'scan' + self.tmp_suffix)
+        return os.path.join(self._data_dir, f'scan{self.tmp_suffix}')
 
     @property
     def tmp_suffix(self):

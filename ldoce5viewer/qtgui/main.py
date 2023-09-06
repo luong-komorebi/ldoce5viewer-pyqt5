@@ -166,8 +166,8 @@ class MainWindow(QMainWindow):
         if not objc:
             self._okToClose = True
 
-        lazy = self._lazy
         if self._okToClose:
+            lazy = self._lazy
             if _LAZY_ADVSEARCH_WINDOW in lazy:
                 lazy[_LAZY_ADVSEARCH_WINDOW].close()
             self._save_to_configfile()
@@ -253,8 +253,7 @@ class MainWindow(QMainWindow):
 
 
     def _updateTitle(self, title):
-        title = title.strip()
-        if title:
+        if title := title.strip():
             self.setWindowTitle('{title} - {appname}'.format(
                 title=title,
                 appname=QApplication.applicationName()))
@@ -291,8 +290,8 @@ class MainWindow(QMainWindow):
 
         query = self._ui.lineEditSearch.text().strip()
         if incr_res is not None and full_res is not None\
-                and len(incr_res) == 0 and len(full_res) == 0\
-                and len(query.split()) == 1:
+                    and len(incr_res) == 0 and len(full_res) == 0\
+                    and len(query.split()) == 1:
             self._timerSpellCorrection.start(200)
 
         # Escape the previous selection
@@ -334,7 +333,7 @@ class MainWindow(QMainWindow):
         url = self._ui.webView.url().toString()
         sel_row = -1
         for (row, path) in enumerate(map(path_getter, self._found_items)):
-            if 'dict:' + path == url:
+            if f'dict:{path}' == url:
                 sel_row = row
                 break
 
@@ -356,9 +355,6 @@ class MainWindow(QMainWindow):
     def selectItemRelative(self, rel=0):
         if not self._found_items:
             self._selection_pending = True
-            return
-
-        if not self._found_items:
             return
 
         ui = self._ui
@@ -407,7 +403,7 @@ class MainWindow(QMainWindow):
 
         if 0 <= row < len(self._found_items):
             path = self._found_items[row][1]
-            url = QUrl('dict://' + path)
+            url = QUrl(f'dict://{path}')
             if url != self._ui.webView.url():
                 self._ui.webView.load(url)
 
@@ -442,10 +438,7 @@ class MainWindow(QMainWindow):
         if query:
             contains_wild = any(c in query for c in '*?')
 
-            if not contains_wild:
-                results = self._incremental_search(query)
-            else:
-                results = []
+            results = self._incremental_search(query) if not contains_wild else []
             if results is not None:
                 self._incr_results = tuple(results)
                 self._auto_fts_phrase = query
@@ -461,12 +454,9 @@ class MainWindow(QMainWindow):
 
 
     def _onTimerAutoFullSearchTimeout(self):
-        query = self._auto_fts_phrase
         if self._fts_hwdphr_async:
-            if any(c in query for c in "?*"):
-                itemtypes = ('hm', )
-            else:
-                itemtypes = ()
+            query = self._auto_fts_phrase
+            itemtypes = ('hm', ) if any(c in query for c in "?*") else ()
             self._timerSearchingLabel.start(200)
             self._fts_hwdphr_async.update_query(
                     query_str1=query,
@@ -491,11 +481,10 @@ class MainWindow(QMainWindow):
     def _incremental_search(self, key):
         if not self._incremental:
             return None
-        else:
-            try:
-                return self._incremental.search(key, limit=_INCREMENTAL_LIMIT)
-            except (EnvironmentError, incremental.IndexError):
-                return None
+        try:
+            return self._incremental.search(key, limit=_INCREMENTAL_LIMIT)
+        except (EnvironmentError, incremental.IndexError):
+            return None
 
 
     def _onAsyncFTSearchFinished(self):
@@ -560,14 +549,14 @@ class MainWindow(QMainWindow):
         path = self._ui.webView.audioUrlToDownload.path()
         def showSaveDialog(data):
             filename = QFileDialog.getSaveFileName(self,  u'Save mp3', \
-                '',  u'MP3 Files (*.mp3)')
+                    '',  u'MP3 Files (*.mp3)')
             if type(filename) is tuple:
                 filename = filename[0]
 
             if filename != '':
-                file = open(filename, "wb")
-                file.write(data)
-                file.close()
+                with open(filename, "wb") as file:
+                    file.write(data)
+
         self._getAudioData(path, showSaveDialog)
 
     def _onWebViewLinkClicked(self, url):
@@ -612,7 +601,7 @@ class MainWindow(QMainWindow):
     def _onUrlChanged(self, url):
         history = self._ui.webView.history()
         if history.currentItemIndex() == 1 and \
-                history.itemAt(0).url() == QUrl('about:blank'):
+                    history.itemAt(0).url() == QUrl('about:blank'):
             history.clear()
 
         # Update history menu
@@ -624,7 +613,7 @@ class MainWindow(QMainWindow):
                         history.goToItem(history.itemAt(idx))
                 return f
 
-            items = [(idx, item) for (idx, item) in enumerate(items)]
+            items = list(enumerate(items))
             if back:
                 items = items[max(0, curidx-20):curidx]
                 items.reverse()
@@ -757,8 +746,7 @@ class MainWindow(QMainWindow):
             return
 
         text = ' '.join(text[:100].splitlines()).strip()
-        res = self._incremental_search(text)
-        if res:
+        if res := self._incremental_search(text):
             self._ui.lineEditSearch.setText(text)
             self._instantSearch(pending=True, delay=False)
 
@@ -790,8 +778,7 @@ class MainWindow(QMainWindow):
 
 
     def _onTimerAutoPronTimeout(self):
-        autoplayback = get_config().get('autoPronPlayback', None)
-        if autoplayback:
+        if autoplayback := get_config().get('autoPronPlayback', None):
             metaData = self._ui.webView.page().mainFrame().metaData()
             if autoplayback == 'US' and ('us_pron' in metaData):
                 self._playbackAudio('/us_hwd_pron/' + metaData['us_pron'][0])
@@ -821,8 +808,7 @@ class MainWindow(QMainWindow):
         if visible:
             ui.lineEditFind.setFocus()
             ui.lineEditFind.selectAll()
-            text = ui.lineEditFind.text()
-            if text:
+            if text := ui.lineEditFind.text():
                 self.findText(text)
             else:
                 ui.actionFindNext.setEnabled(False)
@@ -999,8 +985,7 @@ class MainWindow(QMainWindow):
         # Icons
         def _set_icon(obj, name=None, var_suffix=''):
             if name:
-                icon = QIcon.fromTheme(name,
-                        QIcon(':/icons/' + name + var_suffix + '.png'))
+                icon = QIcon.fromTheme(name, QIcon(f':/icons/{name}{var_suffix}.png'))
                 obj.setIcon(icon)
             else:
                 obj.setIcon(QIcon())
@@ -1275,20 +1260,16 @@ class MainWindow(QMainWindow):
     def _unload_searchers(self):
         self._updateNetworkAccessManager(None, None)
 
-        obj = self._lazy.pop(_LAZY_FTS_HWDPHR_ASYNC, None)
-        if obj:
+        if obj := self._lazy.pop(_LAZY_FTS_HWDPHR_ASYNC, None):
             obj.shutdown()
 
-        obj = self._lazy.pop(_LAZY_FTS_HWDPHR, None)
-        if obj:
+        if obj := self._lazy.pop(_LAZY_FTS_HWDPHR, None):
             obj.close()
 
-        obj = self._lazy.pop(_LAZY_FTS_DEFEXA, None)
-        if obj:
+        if obj := self._lazy.pop(_LAZY_FTS_DEFEXA, None):
             obj.close()
 
-        obj = self._lazy.pop(_LAZY_INCREMENTAL, None)
-        if obj:
+        if obj := self._lazy.pop(_LAZY_INCREMENTAL, None):
             obj.close()
 
     @property
@@ -1329,10 +1310,9 @@ class MainWindow(QMainWindow):
     def _fts_hwdphr_async(self):
         obj = self._lazy.get(_LAZY_FTS_HWDPHR_ASYNC, None)
         if obj is None:
-            searcher = self._fts_hwdphr
-            if searcher:
+            if searcher := self._fts_hwdphr:
                 obj = self._lazy[_LAZY_FTS_HWDPHR_ASYNC] = \
-                        AsyncFTSearcher(self, searcher)
+                            AsyncFTSearcher(self, searcher)
                 obj.finished.connect(self._onAsyncFTSearchFinished)
                 obj.error.connect(self._onAsyncFTSearchError)
 

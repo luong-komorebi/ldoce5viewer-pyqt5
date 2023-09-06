@@ -12,12 +12,16 @@ _DEFAULT_FONT_NAMES = frozenset((b'sans-serif', b'serif', b'monospace'))
 
 
 def _fallback(fontnames):
-    for name in fontnames:
-        if name in _DEFAULT_FONT_NAMES:
-            return name
-        elif QFont(name).exactMatch():
-            return name
-    return 'serif'
+    return next(
+        (
+            name
+            for name in fontnames
+            if name in _DEFAULT_FONT_NAMES
+            or name not in _DEFAULT_FONT_NAMES
+            and QFont(name).exactMatch()
+        ),
+        'serif',
+    )
 
 
 def css_replace_fontfamily(text):

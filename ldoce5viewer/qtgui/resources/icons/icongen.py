@@ -21,13 +21,13 @@ def cast_gradation(img, b1, b2):
 
 def make_inset_shadow(alpha):
     mc = alpha.copy()
-    for i in xrange(6):
+    for _ in xrange(6):
         mc = mc.filter(ImageFilter.SMOOTH_MORE)
     mc = ImageChops.subtract(alpha, mc)
     mcb = ImageEnhance.Brightness(mc).enhance(0.35)
 
     m1 = alpha.copy()
-    for i in xrange(6):
+    for _ in xrange(6):
         m1 = m1.filter(ImageFilter.SMOOTH_MORE)
     m1 = m1.offset(0, OFFSET_S)
     m1 = ImageChops.subtract(alpha, m1)
@@ -40,13 +40,13 @@ def make_inset_shadow(alpha):
 
 def make_highlight(alpha):
     mc = alpha.copy()
-    for i in xrange(3):
+    for _ in xrange(3):
         mc = mc.filter(ImageFilter.SMOOTH_MORE)
     mc = ImageChops.subtract(mc, alpha)
     mcb = ImageEnhance.Brightness(mc).enhance(0.35)
 
     m1 = alpha.copy()
-    for i in xrange(2):
+    for _ in xrange(2):
         m1 = m1.filter(ImageFilter.SMOOTH_MORE)
     m1 = m1.offset(0, OFFSET_H)
     m1 = ImageChops.subtract(m1, alpha)

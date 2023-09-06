@@ -68,7 +68,7 @@ class VariationsReader(object):
             self._reader = None
 
     def get_variations(self, word):
-        r = set((word, ))
+        r = {word}
         try:
             s = self._reader[enc_utf8(word)]
         except KeyError:
@@ -114,12 +114,11 @@ class MyVariations(Variations):
         text = self.text
         if text in cache:
             return cache[text]
-        else:
-            fieldname = self.fieldname
-            words = [word for word in self.__var_reader.get_variations(text)
-                     if (fieldname, word) in ixreader]
-            cache[text] = words
-            return words
+        fieldname = self.fieldname
+        words = [word for word in self.__var_reader.get_variations(text)
+                 if (fieldname, word) in ixreader]
+        cache[text] = words
+        return words
 
     def __deepcopy__(self, x):
         return MyVariations(self.__var_reader,
@@ -314,10 +313,7 @@ class Searcher(object):
                         continue
 
                 if highlight:
-                    if query_str1:
-                        text = hit.highlights('content')
-                    else:
-                        text = hit['content']
+                    text = hit.highlights('content') if query_str1 else hit['content']
                 else:
                     text = None
 

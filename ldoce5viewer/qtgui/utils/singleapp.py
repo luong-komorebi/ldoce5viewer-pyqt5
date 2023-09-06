@@ -40,8 +40,6 @@ class SingleApplication(QApplication):
         if socket.waitForReadyRead(self._timeout):
             self.messageAvailable.emit(socket.readAll().data().decode('utf-8'))
             socket.disconnectFromServer()
-        else:
-            pass
 
     def isRunning(self):
         return self._isRunning

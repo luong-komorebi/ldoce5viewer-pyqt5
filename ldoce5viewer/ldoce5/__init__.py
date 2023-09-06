@@ -21,13 +21,10 @@ class ArchiveError(Exception):
 
 
 def load_from_cdb_archive(data_dir, archive_name, name):
-    path = os.path.join(data_dir, 'cdb_archives', archive_name + '.cdb')
+    path = os.path.join(data_dir, 'cdb_archives', f'{archive_name}.cdb')
     with CDBReader(path) as db:
         data = db[name.encode('utf-8')]
-        if data[0] == 'c':
-            data = zlib.decompress(data[1:])
-        else:
-            data = data[1:]
+        data = zlib.decompress(data[1:]) if data[0] == 'c' else data[1:]
         return data
 
 

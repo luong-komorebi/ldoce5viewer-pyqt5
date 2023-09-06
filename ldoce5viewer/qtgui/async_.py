@@ -57,9 +57,7 @@ class _FTSearchThread(QThread):
                     self._mutex.unlock()
                     self.searchError.emit()
                 else:
-                    if collector.aborted:
-                        pass
-                    else:
+                    if not collector.aborted:
                         self._mutex.lock()
                         self._result = (merge, result)
                         self._mutex.unlock()

@@ -38,7 +38,7 @@ class CDBReader(object):
         if len(mm) < 2048:
             raise CDBError('file too small')
         mt = _read_512L(mm.read(2048))
-        self._maintable = tuple(zip(mt[0::2], mt[1::2]))
+        self._maintable = tuple(zip(mt[::2], mt[1::2]))
 
     def __enter__(self):
         return self

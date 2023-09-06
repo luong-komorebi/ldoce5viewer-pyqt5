@@ -28,10 +28,9 @@ STATIC_REL_PATH = 'static'
 def _load_static_data(filename):
     """Load a static file from the 'static' directory"""
 
-    is_frozen = (hasattr(sys, 'frozen')  # new py2exe
-                 or imp.is_frozen('__main__'))  # tools/freeze
-
-    if is_frozen:
+    if is_frozen := (
+        hasattr(sys, 'frozen') or imp.is_frozen('__main__')  # new py2exe
+    ):
         if sys.platform.startswith("darwin"):
             path = os.path.join(os.path.dirname(sys.executable),
                                 "../Resources",

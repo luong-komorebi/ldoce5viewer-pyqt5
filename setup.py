@@ -32,25 +32,31 @@ try:
 except ImportError:
     pass
 else:
-    extra_options.update(dict(
+    extra_options |= dict(
         name='LDOCE5 Viewer',
-        windows = [{
-            'script': 'ldoce5viewer.py',
-            'icon_resources': [(1, 'ldoce5viewer/resources/ldoce5viewer.ico')],
-        }],
-        options = {'py2exe': {
-            'includes': ['sip'],
-            'packages': ['lxml.etree', 'gzip', 'lxml._elementpath'],
-            #'excludes': ['_ssl', 'ssl', 'bz2', 'sqlite3', 'select',
-            #             'xml', 'unittest', 'email', 'distutils', 'xmlrpclib',
-            #             'doctest', 'pdb', 'tarfile'],
-            'compressed': True,
-            'optimize': 2,
-            'bundle_files': 3,
-            'dist_dir': 'exedist',
-            }},
-        zipfile=None
-        ))
+        windows=[
+            {
+                'script': 'ldoce5viewer.py',
+                'icon_resources': [
+                    (1, 'ldoce5viewer/resources/ldoce5viewer.ico')
+                ],
+            }
+        ],
+        options={
+            'py2exe': {
+                'includes': ['sip'],
+                'packages': ['lxml.etree', 'gzip', 'lxml._elementpath'],
+                #'excludes': ['_ssl', 'ssl', 'bz2', 'sqlite3', 'select',
+                #             'xml', 'unittest', 'email', 'distutils', 'xmlrpclib',
+                #             'doctest', 'pdb', 'tarfile'],
+                'compressed': True,
+                'optimize': 2,
+                'bundle_files': 3,
+                'dist_dir': 'exedist',
+            }
+        },
+        zipfile=None,
+    )
 
 
 #--------
@@ -62,41 +68,44 @@ except ImportError:
     pass
 else:
     qt_plugins_path = subprocess.check_output('qmake -query QT_INSTALL_PLUGINS', shell=True)
-    qt_plugins_path = qt_plugins_path[0:len(qt_plugins_path)-1] # remove "\n"
-    extra_options.update(dict(
+    qt_plugins_path = qt_plugins_path[:-1]
+    extra_options |= dict(
         name='LDOCE5 Viewer',
         app=['ldoce5viewer.py'],
-        options={'py2app': {
-            'iconfile': './ldoce5viewer/qtgui/resources/ldoce5viewer.icns',
-            'argv_emulation': False,
-            'optimize': 0,
-            'includes': ['sip', 'lxml._elementpath'],
-            'packages': [],
-            'excludes': [
-                'email', 'sqlite3',
-                'PyQt4.QtCLucene',
-                'PyQt4.QtHtml',
-                'PyQt4.QtHelp',
-                'PyQt4.QtTest',
-                'PyQt4.QtOpenGL',
-                'PyQt4.QtScript',
-                'PyQt4.QtScriptTools',
-                'PyQt4.QtSql',
-                'PyQt4.QtDeclarative',
-                'PyQt4.QtMultimedia',
-                'PyQt4.QtDesigner',
-                'PyQt4.QtXml',
-                'PyQt4.QtXmlPatterns',
-            ],
-            #'qt_plugins': [
-            #    'imageformats/libqjpeg.dylib',
-            #]
-        }},
+        options={
+            'py2app': {
+                'iconfile': './ldoce5viewer/qtgui/resources/ldoce5viewer.icns',
+                'argv_emulation': False,
+                'optimize': 0,
+                'includes': ['sip', 'lxml._elementpath'],
+                'packages': [],
+                'excludes': [
+                    'email',
+                    'sqlite3',
+                    'PyQt4.QtCLucene',
+                    'PyQt4.QtHtml',
+                    'PyQt4.QtHelp',
+                    'PyQt4.QtTest',
+                    'PyQt4.QtOpenGL',
+                    'PyQt4.QtScript',
+                    'PyQt4.QtScriptTools',
+                    'PyQt4.QtSql',
+                    'PyQt4.QtDeclarative',
+                    'PyQt4.QtMultimedia',
+                    'PyQt4.QtDesigner',
+                    'PyQt4.QtXml',
+                    'PyQt4.QtXmlPatterns',
+                ],
+                #'qt_plugins': [
+                #    'imageformats/libqjpeg.dylib',
+                # ]
+            }
+        },
         data_files=[
             ('qt_plugins/imageformats', [qt_plugins_path]),
             ('', ['ldoce5viewer/static']),
         ],
-    ))
+    )
 
 
 #------------

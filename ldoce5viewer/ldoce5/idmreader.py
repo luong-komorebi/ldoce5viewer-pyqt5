@@ -102,9 +102,7 @@ def list_files(data_root, archive_name):
             # what's happening?
             return ('', )
         (name, parent) = dirs[i]
-        if parent == 0:
-            return (name, )
-        return build_dirpath(parent) + (name, )
+        return (name, ) if parent == 0 else build_dirpath(parent) + (name, )
 
     def _bytes2int(s):
         r = 0

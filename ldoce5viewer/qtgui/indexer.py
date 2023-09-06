@@ -301,7 +301,7 @@ class IndexingThread(QThread):
                 if self._abort:
                     raise AbortIndexing()
 
-                keywords = set([plain])
+                keywords = {plain}
                 #if plain in phrase_keys:
                 #    keywords.update(phrase_keys[plain])
                 for keyword in keywords:
@@ -325,7 +325,7 @@ class IndexingThread(QThread):
                 if self._abort:
                     raise AbortIndexing()
                 ty = itemtype[0]
-                if ty == 'p' or ty == 'h' or ty == 'a':
+                if ty in ['p', 'h', 'a']:
                     i += 1
                     if i % 10000 == 0:
                         self._message('{0} items added'.format(i))
@@ -349,7 +349,7 @@ class IndexingThread(QThread):
                 if self._abort:
                     raise AbortIndexing()
                 ty = itemtype[0]
-                if ty == 'p' or ty == 'h' or ty == 'a':
+                if ty in ['p', 'h', 'a']:
                     i += 1
                     if i % 10000 == 0:
                         self._message('{0} items added'.format(i))
@@ -376,7 +376,7 @@ class IndexingThread(QThread):
                 if self._abort:
                     raise AbortIndexing()
                 ty = itemtype[0]
-                if ty == 'd' or ty == 'e':
+                if ty in ['d', 'e']:
                     i += 1
                     if i % 10000 == 0:
                         self._message('{0} items added'.format(i))

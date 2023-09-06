@@ -12,8 +12,7 @@ class _MCI:
 
     def send(self, command):
         buffer = c_buffer(255)
-        errorcode = self.w32mci(str(command), buffer, 254, 0)
-        if errorcode:
+        if errorcode := self.w32mci(str(command), buffer, 254, 0):
             return errorcode, self.get_error(errorcode)
         else:
             return errorcode, buffer.value
@@ -27,7 +26,7 @@ class _MCI:
     def directsend(self, txt):
         (err, buf) = self.send(txt)
         if err != 0:
-            print('Error %s for "%s": %s' % (str(err), txt, buf))
+            print(f'Error {str(err)} for "{txt}": {buf}')
         return (err, buf)
 
 
@@ -36,22 +35,21 @@ class AudioClip(object):
     def __init__(self, filename):
         filename = filename.replace('/', '\\')
         self.filename = filename
-        self._alias = 'mp3_%s' % repr(random.random())
+        self._alias = f'mp3_{repr(random.random())}'
 
         self._mci = _MCI()
 
-        (err, buf) = self._mci.directsend(
-                r'open "%s" alias %s' % (filename, self._alias ))
+        (err, buf) = self._mci.directsend(f'open "{filename}" alias {self._alias}')
         if err:
             raise Exception(buf)
 
         (err, buf) = self._mci.directsend(
-                'set %s time format milliseconds' % self._alias)
+            f'set {self._alias} time format milliseconds'
+        )
         if err:
             raise Exception(buf)
 
-        (err, buf) = self._mci.directsend(
-                'status %s length' % self._alias)
+        (err, buf) = self._mci.directsend(f'status {self._alias} length')
         if err:
             raise Exception(buf)
 
@@ -72,25 +70,25 @@ class AudioClip(object):
         return self._mode() == 'playing'
 
     def _mode(self):
-        err, buf = self._mci.directsend('status %s mode' % self._alias)
+        err, buf = self._mci.directsend(f'status {self._alias} mode')
         return buf
 
     def pause(self):
-        self._mci.directsend('pause %s' % self._alias)
+        self._mci.directsend(f'pause {self._alias}')
 
     def unpause(self):
-        self._mci.directsend('resume %s' % self._alias)
+        self._mci.directsend(f'resume {self._alias}')
 
     def ispaused(self):
         return self._mode() == 'paused'
 
     def stop(self):
-        self._mci.directsend('stop %s' % self._alias)
-        self._mci.directsend('seek %s to start' % self._alias)
+        self._mci.directsend(f'stop {self._alias}')
+        self._mci.directsend(f'seek {self._alias} to start')
 
     def close(self):
         if self._alias is not None:
-            self._mci.directsend('close %s' % self._alias)
+            self._mci.directsend(f'close {self._alias}')
             self._alias = None
 
     def milliseconds(self):

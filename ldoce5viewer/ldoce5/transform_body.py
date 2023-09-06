@@ -34,16 +34,15 @@ def _E(tag, attrib={}, children=()):
             continue
 
         if isinstance(c, basestring):
-            if x != elem:
-                if x.tail:
-                    x.tail += c
-                else:
-                    x.tail = c
-            else:
+            if x == elem:
                 if x.text:
                     x.text += c
                 else:
                     x.text = c
+            elif x.tail:
+                x.tail += c
+            else:
+                x.tail = c
         else:
             elem.append(c)
             x = c
@@ -101,9 +100,7 @@ def _preprocess_span(elem):
                 if span.text is not None:
                     m = re.match(r'(.*)(\s*)', span.text)
                     group = m.group
-                    if group(1).strip() in _SPAN_BUBBLEUP_TAIL:
-                        pass
-                    else:
+                    if group(1).strip() not in _SPAN_BUBBLEUP_TAIL:
                         span.text = group(2)
                         if len(elem) >= 1:
                             last = elem[-1]
@@ -133,8 +130,7 @@ def _as_div(elem, root):
     '''transform an element as <div>'''
 
     attrib = {'class': elem.tag.lower()}
-    _id = elem.get('id')
-    if _id:
+    if _id := elem.get('id'):
         attrib['id'] = shorten_id(_id)
 
     children = [elem.text]
@@ -164,7 +160,7 @@ def _trans_ref(elem, root):
     topic = elem.get('topic')
     if len(topic.split('.')) == 4:
         id23 = shorten_id(topic)
-        href = '/fs/' + id23
+        href = f'/fs/{id23}'
         if elem.get('bookmark', None) is not None:
             href += '#' + shorten_id(elem.get('bookmark'))
     else:
@@ -276,7 +272,7 @@ def _trans_assets(root):
             c.append(_E('li', {}, (_E('a', dict(href=link), name), )))
 
         body = _E('ul', {'class': 'assetbody'}, c)
-        yield _E('div', {'class': 'assetbox ' + classname}, (head, body))
+        yield _E('div', {'class': f'assetbox {classname}'}, (head, body))
 
     r = []
     if word:
@@ -298,8 +294,7 @@ def _trans_assets(root):
 def _trans_span(elem, root):
     attrib = elem.attrib
     text = elem.text
-    attr_class = attrib.get('class')
-    if attr_class:
+    if attr_class := attrib.get('class'):
         if attr_class == 'exabullet':
             return
         elif attr_class == 'sensenum':
@@ -323,7 +318,7 @@ def _trans_audio(elem, root):
     res = elem.get('resource').lower()
     path = 'audio:///{0}/{1}'.format(res, topic.split('/')[-1])
     attrib = { 'href': path, 'class': 'audio' }
-    if res == 'exa_pron' or res == 'sfx':
+    if res in ['exa_pron', 'sfx']:
         attrib['title'] = 'Play'
         img = 'static:///images/speaker_eg.png'
     elif res == 'gb_hwd_pron':
@@ -343,8 +338,8 @@ def _trans_audio(elem, root):
 def _trans_illustration(elem, root):
     topic = elem.get('thumb')
     filename = topic.split('/')[-1]
-    path_thumb = '/picture/thumbnail/' + filename
-    path_full = '/picture/fullsize/' + filename
+    path_thumb = f'/picture/thumbnail/{filename}'
+    path_full = f'/picture/fullsize/{filename}'
     attrib = {'src': path_thumb, 'style': 'float: right'}
     children = (_E('img', attrib), )
     yield _E('a', {'class': 'illust', 'href': path_full}, children)
@@ -407,13 +402,11 @@ def _dispatch(elem, root):
 
 def body2html(root):
     _preprocess_span(root)
-    r = []
-
-    # pass the root element to the dispatcher
-    for el in _dispatch(root, root):
-        if not isinstance(el, basestring):
-            r.append(tounicode(el, pretty_print=True, method='html'))
-
+    r = [
+        tounicode(el, pretty_print=True, method='html')
+        for el in _dispatch(root, root)
+        if not isinstance(el, basestring)
+    ]
     # replace some characters
     body = ''.join(r).translate({0x2027: 0xb7})
     body = re.sub(r'([→►↔])', r'<span>\1</span>', body)

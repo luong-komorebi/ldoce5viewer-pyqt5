@@ -34,13 +34,9 @@ class FilemapReader(object):
         self._filemap.close()
 
     def lookup(self, archive, name):
-        key = md5((archive + ':' + name).encode('ascii')).digest()[:10]
+        key = md5(f'{archive}:{name}'.encode('ascii')).digest()[:10]
         data = self._filemap[key]
-        if len(data) == 16:
-            location = _unpack_IIII(data)
-        else:
-            location = _unpack_IHHH(data)
-        return location
+        return _unpack_IIII(data) if len(data) == 16 else _unpack_IHHH(data)
 
 
 class FilemapMaker(object):
@@ -49,7 +45,7 @@ class FilemapMaker(object):
 
     def add(self, archive, name, location):
         cmpo, cmps, orgo, orgs = location
-        key = md5((archive + ':' + name).encode('ascii')).digest()[:10]
+        key = md5(f'{archive}:{name}'.encode('ascii')).digest()[:10]
         if cmps < 65536 and orgo < 65536 and orgs < 65536:
             self._maker.add(key, _pack_IHHH(cmpo, cmps, orgo, orgs))
         else:
@@ -67,13 +63,10 @@ def list_files(data_dir, arch_name):
         for (dirs, name, location) in files:
             if arch_name == 'picture':
                 name = '{0}/{1}'.format(dirs[0], name)
-            elif (arch_name == 'fs' or arch_name == 'pronpractice'):
+            elif arch_name in ['fs', 'pronpractice']:
                 root = et.fromstring(arch_reader.read(location))
                 name = shorten_id(root.get('id'))
             elif name.endswith('.xml'):
                 root = et.fromstring(arch_reader.read(location))
-                if root.get('id', None) is not None:
-                    name = root.get('id')
-                else:
-                    name = root.get('idm_id')
+                name = root.get('idm_id') if root.get('id', None) is None else root.get('id')
             yield (name, location)

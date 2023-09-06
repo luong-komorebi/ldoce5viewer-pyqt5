@@ -137,8 +137,7 @@ class AdvancedSearchDialog(QDialog):
                 tw.expandItem(item)
             item.setCheckState(0, Qt.Unchecked)
 
-        parent = item.parent()
-        if parent:
+        if parent := item.parent():
             parent_state = parent.checkState(0)
             children_checked = False
             for i in range(parent.childCount()):
@@ -186,12 +185,8 @@ ADV_HEADER = """<!DOCTYPE html>
 
 
 def _render_header(title, mode, phrase, filters):
-    r = []
-    r.append(ADV_HEADER)
-    r.append('<h1>{0}</h1>'.format(title))
-    r.append('<ul class="nav">\n')
-
-    modes = [(name, spec) for (name, spec) in MODE_DICT.items()]
+    r = [ADV_HEADER, '<h1>{0}</h1>'.format(title), '<ul class="nav">\n']
+    modes = list(MODE_DICT.items())
     modes.sort(key=itemgetter(0))
 
     for (name, spec) in modes:
@@ -262,9 +257,7 @@ def _render_hwdphr(items, mode):
                 '''<li><a href="#" onclick="$('.label_p').hide();'''
                 '''$('.label_s').hide(); $(this).hide();">'''
                 '''Hide extra information</a></li>''')
-        r.append('</ul>\n')
-
-        r.append('<ul class="result r_{0}">\n'.format(mode))
+        r.extend(('</ul>\n', '<ul class="result r_{0}">\n'.format(mode)))
         for item in items:
             (label, path, sortkey, prio, text) = item
             r.append('<li>'
@@ -295,13 +288,15 @@ def search_and_render(url, fulltext_hp, fulltext_de):
             query_str1=phrase, query_str2=filters,
             itemtypes=spec['itemtypes'],
             highlight=spec['highlight'])
-        r.append(_render_header(spec['title'], mode, phrase, filters))
-        r.append(spec['renderer'](res, mode))
-        r.append(_render_footer())
+        r.extend(
+            (
+                _render_header(spec['title'], mode, phrase, filters),
+                spec['renderer'](res, mode),
+            )
+        )
     else:
         r.append(_render_header('Advanced Search', mode, phrase, filters))
-        r.append(_render_footer())
-
+    r.append(_render_footer())
     return ''.join(r)
 
 
